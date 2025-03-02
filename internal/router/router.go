@@ -31,7 +31,7 @@ func Configure(cfg *config.Config) *Router {
 		GET /api/user/withdrawals — получение информации о выводе средств с накопительного счёта пользователем.
 	*/
 	r.Handler.Route("/api/user", func(cr chi.Router) {
-		cr.Post("/register", r.Test)
+		cr.Post("/register", r.RegisterHandler)
 		cr.Post("/login", r.Test)
 		cr.Post("/orders", r.Test)
 		cr.Post("/balance/withdraw", r.Test)
