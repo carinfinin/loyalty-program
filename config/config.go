@@ -6,4 +6,5 @@ type Config struct {
 	Addr         string
 	WriteTimeout time.Duration
 	ReadTimeout  time.Duration
+	DBPath       string
 }
