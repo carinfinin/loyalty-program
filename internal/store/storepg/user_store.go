@@ -3,8 +3,9 @@ package storepg
 import (
 	"context"
 	"github.com/carinfinin/loyalty-program/config"
+	"github.com/carinfinin/loyalty-program/internal/logger"
 	"github.com/carinfinin/loyalty-program/internal/store/models"
-	"github.com/carinfinin/loyalty-program/pkg/logger"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
@@ -13,12 +14,19 @@ type UserStore struct {
 	db *sqlx.DB
 }
 
-func New(cfg config.Config) (*UserStore, error) {
+func New(cfg *config.Config) (*UserStore, error) {
 	db, err := sqlx.Open("pgx", cfg.DBPath)
 	if err != nil {
-		logger.Log.Error("store error: ", err)
+		logger.Log.Errorf("store error: %v", err)
 		return nil, err
 	}
+
+	if err := db.Ping(); err != nil {
+		logger.Log.Errorf("failed to ping database: %v", err)
+		db.Close()
+		return nil, err
+	}
+
 	return &UserStore{
 		db: db,
 	}, nil

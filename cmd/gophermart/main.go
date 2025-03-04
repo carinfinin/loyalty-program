@@ -2,11 +2,11 @@ package main
 
 import (
 	"github.com/carinfinin/loyalty-program/config"
+	"github.com/carinfinin/loyalty-program/internal/logger"
 	"github.com/carinfinin/loyalty-program/internal/server"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 func main() {
@@ -14,17 +14,24 @@ func main() {
 	exit := make(chan os.Signal, 1)
 	signal.Notify(exit, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
-	s := server.New(&config.Config{
-		Addr:         ":8080",
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
-	})
+	cfg, err := config.New()
+	if err != nil {
+		panic(err)
+	}
+	err = logger.Configure(cfg.LogLevel)
+	if err != nil {
+		panic(err)
+	}
+	s := server.New(cfg)
 
 	go func() {
 		s.Run()
+		logger.Log.Info("start app")
+
 	}()
 
 	<-exit
-	// todo stoping
 
+	logger.Log.Info("stop app")
+	// todo stoping
 }

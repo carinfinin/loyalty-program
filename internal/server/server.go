@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/carinfinin/loyalty-program/config"
+	"github.com/carinfinin/loyalty-program/internal/logger"
 	"github.com/carinfinin/loyalty-program/internal/router"
 	"net/http"
 )
@@ -23,5 +24,6 @@ func New(cfg *config.Config) *Server {
 }
 
 func (s *Server) Run() error {
+	logger.Log.Info("start server on ", s.Addr)
 	return s.ListenAndServe()
 }
