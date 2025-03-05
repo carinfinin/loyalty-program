@@ -24,8 +24,12 @@ func (r *Router) RegisterHandler(writer http.ResponseWriter, request *http.Reque
 
 	fmt.Println(u)
 
-	err = r.userService.Register(request.Context(), &u)
+	token, err := r.userService.Register(request.Context(), &u)
 	if err != nil {
 		logger.Log.Error(nf, fmt.Sprintf(" error: %v", err))
 	}
+	logger.Log.Info(nf, fmt.Sprintf(" token: %v", token))
+
+	//todo add cookies
+
 }

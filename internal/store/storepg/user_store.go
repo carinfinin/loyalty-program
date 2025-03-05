@@ -37,14 +37,14 @@ func (s *UserStore) User(ctx context.Context, login string) (*models.User, error
 		Login: login,
 	}
 	row := s.db.QueryRowContext(ctx, "SELECT id, password_hash FROM users WHERE login = $1", login)
-	row.Scan(&user.ID, &user.PasswordHash)
+	row.Scan(&user.ID, &user.Password)
 	if err := row.Err(); err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
-func (s *UserStore) SaveUser(ctx context.Context, login, passHash string) (int64, error) {
+func (s *UserStore) SaveUser(ctx context.Context, login string, passHash []byte) (int64, error) {
 	r, err := s.db.ExecContext(ctx, "INSERT INTO users (login, password_hash) VALUES ($1, $2)", login, passHash)
 	if err != nil {
 		return 0, err

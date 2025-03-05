@@ -12,7 +12,7 @@ type Repository interface {
 
 type UserRepository interface {
 	User(ctx context.Context, login string) (*models.User, error)
-	SaveUser(ctx context.Context, login string, passHash string) (int64, error)
+	SaveUser(ctx context.Context, login string, passHash []byte) (int64, error)
 }
 
 type OrderRepository interface {
