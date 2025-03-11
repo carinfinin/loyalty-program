@@ -13,6 +13,7 @@ type Config struct {
 	DBPath       string        `yaml:"db_path" env:"DATABASE_URI" env-default:"postgres://user:password@localhost:5432/loyalty?sslmode=disable"`
 	AccrualAddr  string        `yaml:"accrual_address" env:"ACCRUAL_SYSTEM_ADDRESS" env-default:""`
 	LogLevel     string        `yaml:"log_level" env:"LOG_LEVEL" env-default:"info"`
+	Secret       string        `yaml:"secret"`
 }
 
 func New() (*Config, error) {

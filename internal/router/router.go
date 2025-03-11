@@ -1,26 +1,28 @@
 package router
 
 import (
-	"github.com/carinfinin/loyalty-program/config"
+	"github.com/carinfinin/loyalty-program/internal/config"
 	"github.com/carinfinin/loyalty-program/internal/service"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 )
 
 type Router struct {
-	Handler     *chi.Mux
-	userService *service.UserService
+	Handler *chi.Mux
+	service *service.Service
+	Config  *config.Config
 }
 
-func New(cfg *config.Config) *Router {
+func New(cfg *config.Config, service *service.Service) *Router {
 	return &Router{
-		Handler:     chi.NewRouter(),
-		userService: service.New(cfg),
+		Handler: chi.NewRouter(),
+		service: service,
+		Config:  cfg,
 	}
 }
 
-func Configure(cfg *config.Config) *Router {
-	r := New(cfg)
+func Configure(cfg *config.Config, service *service.Service) *Router {
+	r := New(cfg, service)
 	//r.Use(middleware.RequestID)
 
 	/*
@@ -34,11 +36,12 @@ func Configure(cfg *config.Config) *Router {
 
 	r.Handler.Route("/api/user", func(cr chi.Router) {
 		cr.Post("/register", r.RegisterHandler)
-		cr.Post("/login", r.Test)
-		cr.Post("/orders", r.Test)
-		cr.Post("/balance/withdraw", r.Test)
-		cr.Get("/balance", r.Test)
-		cr.Get("/withdrawals", r.Test)
+		cr.Post("/login", r.LoginHandler)
+
+		cr.With(r.AuthMiddleware).Post("/orders", r.Test)
+		cr.With(r.AuthMiddleware).Post("/balance/withdraw", r.Test)
+		cr.With(r.AuthMiddleware).Get("/balance", r.Test)
+		cr.With(r.AuthMiddleware).Get("/withdrawals", r.Test)
 	})
 	return r
 }

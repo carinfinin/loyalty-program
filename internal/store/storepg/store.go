@@ -2,9 +2,13 @@ package storepg
 
 import (
 	"context"
-	"github.com/carinfinin/loyalty-program/config"
+	"errors"
+	"github.com/carinfinin/loyalty-program/internal/config"
 	"github.com/carinfinin/loyalty-program/internal/logger"
+	"github.com/carinfinin/loyalty-program/internal/store"
 	"github.com/carinfinin/loyalty-program/internal/store/models"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -47,7 +51,13 @@ func (s *UserStore) User(ctx context.Context, login string) (*models.User, error
 func (s *UserStore) SaveUser(ctx context.Context, login string, passHash []byte) (int64, error) {
 	r, err := s.db.ExecContext(ctx, "INSERT INTO users (login, password_hash) VALUES ($1, $2)", login, passHash)
 	if err != nil {
+		var errPG *pgconn.PgError
+		if errors.As(err, &errPG) && pgerrcode.IsIntegrityConstraintViolation(errPG.Code) {
+			return 0, store.ErrDouble
+		}
+
 		return 0, err
 	}
+
 	return r.RowsAffected()
 }

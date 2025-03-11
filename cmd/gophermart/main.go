@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/carinfinin/loyalty-program/config"
+	"github.com/carinfinin/loyalty-program/internal/config"
 	"github.com/carinfinin/loyalty-program/internal/logger"
 	"github.com/carinfinin/loyalty-program/internal/server"
 	"os"
