@@ -10,6 +10,7 @@ import (
 	"github.com/carinfinin/loyalty-program/internal/store/models"
 	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
+	"strconv"
 	"time"
 )
 
@@ -86,4 +87,25 @@ func (s *Service) Login(ctx context.Context, user *models.User) (string, error) 
 	}
 
 	return token, nil
+}
+
+func (s *Service) SaveOrder(ctx context.Context, number string) (string, error) {
+	const nf = "service save order"
+	//id, ok := ctx.Value(router.UserId).(int)
+	//if !ok {
+	//	return "", fmt.Errorf("user id not get in context")
+	//}
+	num, err := strconv.ParseInt(number, 10, 64)
+	if err != nil {
+		logger.Log.Error(nf, err)
+		return "", err
+	}
+	logger.Log.Info("Service SaveOrder")
+
+	_, err = s.store.SaveOrder(ctx, num, 14)
+	if err != nil {
+		logger.Log.Error(nf, err)
+		return "", err
+	}
+	return "", nil
 }

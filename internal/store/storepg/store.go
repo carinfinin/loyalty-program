@@ -2,7 +2,9 @@ package storepg
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/carinfinin/loyalty-program/internal/config"
 	"github.com/carinfinin/loyalty-program/internal/logger"
 	"github.com/carinfinin/loyalty-program/internal/store"
@@ -60,4 +62,34 @@ func (s *UserStore) SaveUser(ctx context.Context, login string, passHash []byte)
 	}
 
 	return r.RowsAffected()
+}
+
+func (s *UserStore) SaveOrder(ctx context.Context, number int64, userID int) (*models.Order, error) {
+	logger.Log.Info("start Begin")
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	var id int
+	row := tx.QueryRowContext(ctx, "SELECT user_id FROM orders WHERE number = $1", number)
+
+	err = row.Scan(&id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			fmt.Println("NOT DATA ROW")
+
+			//todo add
+		}
+		return nil, err
+	}
+	if err = row.Err(); err != nil {
+		fmt.Println("row err:", err)
+		return nil, err
+	}
+	fmt.Println("nil:")
+	tx.Commit()
+	return nil, err
 }

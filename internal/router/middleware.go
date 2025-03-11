@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/carinfinin/loyalty-program/internal/jwtc"
 	"github.com/carinfinin/loyalty-program/internal/logger"
-	"github.com/carinfinin/loyalty-program/internal/store"
 	"net/http"
 )
 
@@ -18,7 +17,7 @@ func (r *Router) AuthMiddleware(next http.Handler) http.Handler {
 		logger.Log.Info("AuthMiddleware")
 		cookie, err := request.Cookie(jwtc.AuthCookie)
 		if err != nil {
-			http.Error(writer, store.ErrNotAuth.Error(), http.StatusUnauthorized)
+			http.Error(writer, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
@@ -28,8 +27,9 @@ func (r *Router) AuthMiddleware(next http.Handler) http.Handler {
 			http.Error(writer, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
+
 		ctx := context.WithValue(request.Context(), UserId, id)
-		request.WithContext(ctx)
-		next.ServeHTTP(writer, request)
+		newReq := request.WithContext(ctx)
+		next.ServeHTTP(writer, newReq)
 	})
 }

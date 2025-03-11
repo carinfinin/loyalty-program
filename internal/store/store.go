@@ -12,6 +12,7 @@ var ErrNotAuth = errors.New("Invalid login password pair")
 type Repository interface {
 	User(ctx context.Context, login string) (*models.User, error)
 	SaveUser(ctx context.Context, login string, passHash []byte) (int64, error)
+	SaveOrder(ctx context.Context, number int64, userID int) (*models.Order, error)
 }
 
 type OrderRepository interface {
