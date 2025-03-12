@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/carinfinin/loyalty-program/internal/config"
 	"github.com/carinfinin/loyalty-program/internal/logger"
+	"github.com/carinfinin/loyalty-program/internal/router"
 	"github.com/carinfinin/loyalty-program/internal/store"
 	"github.com/carinfinin/loyalty-program/internal/store/models"
 	"github.com/jackc/pgerrcode"
@@ -64,32 +65,75 @@ func (s *UserStore) SaveUser(ctx context.Context, login string, passHash []byte)
 	return r.RowsAffected()
 }
 
-func (s *UserStore) SaveOrder(ctx context.Context, number int64, userID int) (*models.Order, error) {
-	logger.Log.Info("start Begin")
+func (s *UserStore) SaveOrder(ctx context.Context, number int64, userID int64) error {
+	logger.Log.Debug("start Begin")
+	logger.Log.Debug("userID:", userID)
 
 	tx, err := s.db.Begin()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer tx.Rollback()
 
-	var id int
+	var id int64
 	row := tx.QueryRowContext(ctx, "SELECT user_id FROM orders WHERE number = $1", number)
 
 	err = row.Scan(&id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			fmt.Println("NOT DATA ROW")
+			logger.Log.Debug("no data row start add row")
 
-			//todo add
+			_, err = tx.ExecContext(ctx, "INSERT INTO orders (number, status, user_id) VALUES ($1, 'NEW', $2)", number, userID)
+			if err != nil {
+				logger.Log.Debug("add arder error: ", err)
+				return err
+			}
+			logger.Log.Debug("transaction committed successfully")
+			return tx.Commit()
 		}
-		return nil, err
+		return err
 	}
 	if err = row.Err(); err != nil {
 		fmt.Println("row err:", err)
+		return err
+	}
+	if id > 0 && id == userID {
+		logger.Log.Debug("error add order row double")
+		return store.Double
+	}
+	logger.Log.Debug("error add order row busy")
+	return store.Busy
+
+}
+
+func (s *UserStore) OrderList(ctx context.Context) ([]*models.Order, error) {
+	const nf = "store order list"
+	result := make([]*models.Order, 0)
+	userID := ctx.Value(router.UserId)
+
+	rows, err := s.db.QueryContext(ctx, "SELECT number, status, accrual, created_at FROM orders WHERE user_id = $1 ORDER BY created_at DESC", userID)
+	if err != nil {
+		logger.Log.Debug(nf, fmt.Sprintf("query error: %v", err))
 		return nil, err
 	}
-	fmt.Println("nil:")
-	tx.Commit()
-	return nil, err
+	defer rows.Close()
+
+	for rows.Next() {
+		var order models.Order
+		var accrual sql.NullInt64
+
+		err = rows.Scan(&order.Number, &order.Status, &accrual, &order.Created)
+		if err != nil {
+			logger.Log.Debug(nf, fmt.Sprintf("scan error: %v", err))
+			return nil, err
+		}
+		if accrual.Valid {
+			order.Accrual = accrual.Int64
+		} else {
+			order.Accrual = 0
+		}
+
+		result = append(result, &order)
+	}
+	return result, nil
 }

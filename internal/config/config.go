@@ -12,7 +12,7 @@ type Config struct {
 	ReadTimeout  time.Duration `yaml:"timeout_read" env:"TIMEOUT_READ" env-default:"15s"`
 	DBPath       string        `yaml:"db_path" env:"DATABASE_URI" env-default:"postgres://user:password@localhost:5432/loyalty?sslmode=disable"`
 	AccrualAddr  string        `yaml:"accrual_address" env:"ACCRUAL_SYSTEM_ADDRESS" env-default:""`
-	LogLevel     string        `yaml:"log_level" env:"LOG_LEVEL" env-default:"info"`
+	LogLevel     string        `yaml:"log_level" env:"LOG_LEVEL" env-default:"debug"`
 	Secret       string        `yaml:"secret"`
 }
 

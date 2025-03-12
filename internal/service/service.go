@@ -89,23 +89,24 @@ func (s *Service) Login(ctx context.Context, user *models.User) (string, error) 
 	return token, nil
 }
 
-func (s *Service) SaveOrder(ctx context.Context, number string) (string, error) {
+func (s *Service) SaveOrder(ctx context.Context, number string, userID int64) error {
 	const nf = "service save order"
-	//id, ok := ctx.Value(router.UserId).(int)
-	//if !ok {
-	//	return "", fmt.Errorf("user id not get in context")
-	//}
+
 	num, err := strconv.ParseInt(number, 10, 64)
 	if err != nil {
 		logger.Log.Error(nf, err)
-		return "", err
+		return err
 	}
-	logger.Log.Info("Service SaveOrder")
 
-	_, err = s.store.SaveOrder(ctx, num, 14)
+	err = s.store.SaveOrder(ctx, num, userID)
 	if err != nil {
 		logger.Log.Error(nf, err)
-		return "", err
+		return err
 	}
-	return "", nil
+	return nil
+}
+
+func (s *Service) OrderList(ctx context.Context) ([]*models.Order, error) {
+
+	return s.store.OrderList(ctx)
 }

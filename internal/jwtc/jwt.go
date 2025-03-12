@@ -41,6 +41,6 @@ func Decode(token string, cfg *config.Config) (int64, error) {
 	if !ok {
 		return 0, fmt.Errorf("not converce in int64 from %v", claims)
 	}
-	//jwt.RegisteredClaims
+	//jwt.RegisteredClaim
 	return int64(uid), nil
 }

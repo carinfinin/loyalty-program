@@ -8,11 +8,14 @@ import (
 
 var ErrDouble = errors.New("login already taken")
 var ErrNotAuth = errors.New("Invalid login password pair")
+var Double = errors.New("rows double")
+var Busy = errors.New("uploaded by another user")
 
 type Repository interface {
 	User(ctx context.Context, login string) (*models.User, error)
 	SaveUser(ctx context.Context, login string, passHash []byte) (int64, error)
-	SaveOrder(ctx context.Context, number int64, userID int) (*models.Order, error)
+	SaveOrder(ctx context.Context, number int64, userID int64) error
+	OrderList(ctx context.Context) ([]*models.Order, error)
 }
 
 type OrderRepository interface {

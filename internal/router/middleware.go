@@ -14,7 +14,6 @@ const UserId keyUserID = "userID"
 func (r *Router) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 
-		logger.Log.Info("AuthMiddleware")
 		cookie, err := request.Cookie(jwtc.AuthCookie)
 		if err != nil {
 			http.Error(writer, "Unauthorized", http.StatusUnauthorized)
@@ -28,6 +27,7 @@ func (r *Router) AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		logger.Log.Debug("AuthMiddleware UserId: ", id)
 		ctx := context.WithValue(request.Context(), UserId, id)
 		newReq := request.WithContext(ctx)
 		next.ServeHTTP(writer, newReq)
