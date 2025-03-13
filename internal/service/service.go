@@ -110,3 +110,11 @@ func (s *Service) OrderList(ctx context.Context) ([]*models.Order, error) {
 
 	return s.store.OrderList(ctx)
 }
+
+func (s *Service) WithdrawalSave(ctx context.Context, withdrawal *models.Withdrawal) error {
+	return s.store.WithdrawalSave(ctx, withdrawal)
+}
+
+func (s *Service) Withdrawal(ctx context.Context) ([]*models.Withdrawal, error) {
+	return s.store.Withdrawal(ctx)
+}

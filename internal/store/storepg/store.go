@@ -137,3 +137,48 @@ func (s *UserStore) OrderList(ctx context.Context) ([]*models.Order, error) {
 	}
 	return result, nil
 }
+
+func (s *UserStore) Balance(ctx context.Context) (*models.Balance, error) {
+	const nf = "store get balance"
+
+	//userID := ctx.Value(router.UserId)
+
+	return nil, nil
+}
+
+func (s *UserStore) WithdrawalSave(ctx context.Context, wd *models.Withdrawal) error {
+	const nf = "store withdrawal save "
+
+	userID := ctx.Value(router.UserId)
+
+	_, err := s.db.ExecContext(ctx, "INSERT INTO withdrawals (order_number, sum, user_id) VALUES ($1, $2, $3)", wd.OrderNumber, wd.Sum, userID)
+	if err != nil {
+		logger.Log.Debug(nf, fmt.Sprintf("scan error: %v", err))
+		return err
+	}
+	return nil
+}
+
+func (s *UserStore) Withdrawal(ctx context.Context) ([]*models.Withdrawal, error) {
+	const nf = "store get withdrawal "
+	userID := ctx.Value(router.UserId)
+	result := make([]*models.Withdrawal, 0)
+	rows, err := s.db.QueryContext(ctx, "SELECT order_number, sum, processed_at FROM withdrawals WHERE user_id = $1 ORDER BY processed_at DESC", userID)
+	if err != nil {
+		logger.Log.Debug(nf, fmt.Sprintf("query error: %v", err))
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		tmp := models.Withdrawal{}
+		err = rows.Scan(&tmp.OrderNumber, &tmp.Sum, &tmp.ProcessedAt)
+		if err != nil {
+			logger.Log.Debug(nf, fmt.Sprintf("scan error: %v", err))
+			return nil, err
+		}
+		result = append(result, &tmp)
+	}
+
+	return result, nil
+}

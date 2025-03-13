@@ -6,6 +6,7 @@ import (
 	"github.com/EClaesson/go-luhn"
 	"github.com/carinfinin/loyalty-program/internal/logger"
 	"github.com/carinfinin/loyalty-program/internal/store"
+	"github.com/carinfinin/loyalty-program/internal/store/models"
 	"github.com/pkg/errors"
 	"io"
 	"net/http"
@@ -73,6 +74,64 @@ func (r *Router) OrderList(writer http.ResponseWriter, request *http.Request) {
 	*/
 
 	result, err := r.service.OrderList(request.Context())
+	if err != nil {
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if len(result) == 0 {
+		writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+	encoder := json.NewEncoder(writer)
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(http.StatusOK)
+
+	if err = encoder.Encode(result); err != nil {
+		http.Error(writer, "error write json", http.StatusInternalServerError)
+		return
+	}
+	return
+}
+
+func (r *Router) Balance(writer http.ResponseWriter, request *http.Request) {
+
+}
+
+func (r *Router) WithdrawalSave(writer http.ResponseWriter, request *http.Request) {
+	const nf = "router withdrawal save "
+
+	var w models.Withdrawal
+	decoder := json.NewDecoder(request.Body)
+	err := decoder.Decode(&w)
+	if err != nil {
+		logger.Log.Error(nf, fmt.Sprintf(" error: %v", err))
+		http.Error(writer, "bad request", http.StatusBadRequest)
+		return
+	}
+	defer request.Body.Close()
+
+	ok, err := luhn.IsValid(w.OrderNumber)
+	if err != nil || !ok {
+		writer.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
+
+	//todo проверка колва средств
+	err = r.service.WithdrawalSave(request.Context(), &w)
+	if err != nil {
+		logger.Log.Error(nf, fmt.Sprintf(" error: %v", err))
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	writer.WriteHeader(http.StatusOK)
+	return
+}
+
+func (r *Router) Withdrawal(writer http.ResponseWriter, request *http.Request) {
+	const nf = "withdrawal list"
+
+	result, err := r.service.Withdrawal(request.Context())
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
 		return

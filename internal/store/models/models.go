@@ -16,3 +16,15 @@ type Order struct {
 	User    int       `json:"-"`
 	Created time.Time `json:"uploaded_at"`
 }
+
+type Balance struct {
+	Current   float64 `json:"current"`
+	Withdrawn int     `json:"withdrawn"`
+}
+
+type Withdrawal struct {
+	OrderNumber string    `json:"order"`
+	User        int       `json:"-"`
+	Sum         int       `json:"sum"`
+	ProcessedAt time.Time `json:"processed_at"`
+}
