@@ -10,6 +10,7 @@ var ErrDouble = errors.New("login already taken")
 var ErrNotAuth = errors.New("Invalid login password pair")
 var Double = errors.New("rows double")
 var Busy = errors.New("uploaded by another user")
+var BalanceIsLow = errors.New("there are insufficient funds in the account")
 
 type Repository interface {
 	User(ctx context.Context, login string) (*models.User, error)
@@ -18,9 +19,5 @@ type Repository interface {
 	OrderList(ctx context.Context) ([]*models.Order, error)
 	WithdrawalSave(ctx context.Context, wd *models.Withdrawal) error
 	Withdrawal(ctx context.Context) ([]*models.Withdrawal, error)
-}
-
-type OrderRepository interface {
-	Order(ctx context.Context, login string, passHash string) (int64, error)
-	List(ctx context.Context, login string, passHash string) (int64, error)
+	Balance(ctx context.Context) (*models.Balance, error)
 }

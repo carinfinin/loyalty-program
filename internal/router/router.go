@@ -41,7 +41,7 @@ func Configure(cfg *config.Config, service *service.Service) *Router {
 		cr.With(r.AuthMiddleware).Post("/orders", r.OrderHandler)
 		cr.With(r.AuthMiddleware).Get("/orders", r.OrderList)
 		cr.With(r.AuthMiddleware).Post("/balance/withdraw", r.WithdrawalSave)
-		cr.With(r.AuthMiddleware).Get("/balance", r.Test)
+		cr.With(r.AuthMiddleware).Get("/balance", r.Balance)
 		cr.With(r.AuthMiddleware).Get("/withdrawals", r.Withdrawal)
 	})
 	return r

@@ -85,7 +85,7 @@ func (s *UserStore) SaveOrder(ctx context.Context, number int64, userID int64) e
 
 			_, err = tx.ExecContext(ctx, "INSERT INTO orders (number, status, user_id) VALUES ($1, 'NEW', $2)", number, userID)
 			if err != nil {
-				logger.Log.Debug("add arder error: ", err)
+				logger.Log.Debug("add order error: ", err)
 				return err
 			}
 			logger.Log.Debug("transaction committed successfully")
@@ -120,7 +120,7 @@ func (s *UserStore) OrderList(ctx context.Context) ([]*models.Order, error) {
 
 	for rows.Next() {
 		var order models.Order
-		var accrual sql.NullInt64
+		var accrual sql.NullFloat64
 
 		err = rows.Scan(&order.Number, &order.Status, &accrual, &order.Created)
 		if err != nil {
@@ -128,7 +128,7 @@ func (s *UserStore) OrderList(ctx context.Context) ([]*models.Order, error) {
 			return nil, err
 		}
 		if accrual.Valid {
-			order.Accrual = accrual.Int64
+			order.Accrual = accrual.Float64
 		} else {
 			order.Accrual = 0
 		}
@@ -140,10 +140,40 @@ func (s *UserStore) OrderList(ctx context.Context) ([]*models.Order, error) {
 
 func (s *UserStore) Balance(ctx context.Context) (*models.Balance, error) {
 	const nf = "store get balance"
+	balance := models.Balance{}
+	userID := ctx.Value(router.UserId)
 
-	//userID := ctx.Value(router.UserId)
+	row := s.db.QueryRowContext(ctx, "SELECT current, withdrawn FROM balance WHERE user_id = $1", userID)
+	err := row.Scan(&balance.Current, &balance.Withdrawn)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return &balance, nil
+		}
+		logger.Log.Debug(nf, fmt.Sprintf("scan error: %v", err))
+		return nil, err
+	}
+	err = row.Err()
+	if err != nil {
+		logger.Log.Debug(nf, fmt.Sprintf("query error: %v", err))
+		return nil, err
+	}
 
-	return nil, nil
+	return &balance, nil
+}
+
+func (s *UserStore) BalanceUpdate(ctx context.Context, b *models.Balance) error {
+	const nf = "store balance update "
+	query := `INSERT INTO balance (user_id, current, withdrawn)
+				VALUES ($1, $2, $3)
+				ON CONFLICT (user_id) DO UPDATE
+				SET current = EXCLUDED.current, withdrawn = EXCLUDED.withdrawn;`
+	userID := ctx.Value(router.UserId)
+	_, err := s.db.ExecContext(ctx, query, userID, b.Current, b.Withdrawn)
+	if err != nil {
+		logger.Log.Debug(nf, fmt.Sprintf("query error: %v", err))
+		return err
+	}
+	return nil
 }
 
 func (s *UserStore) WithdrawalSave(ctx context.Context, wd *models.Withdrawal) error {
@@ -151,15 +181,46 @@ func (s *UserStore) WithdrawalSave(ctx context.Context, wd *models.Withdrawal) e
 
 	userID := ctx.Value(router.UserId)
 
-	_, err := s.db.ExecContext(ctx, "INSERT INTO withdrawals (order_number, sum, user_id) VALUES ($1, $2, $3)", wd.OrderNumber, wd.Sum, userID)
+	tx, err := s.db.Begin()
+	if err != nil {
+		logger.Log.Debug(nf, fmt.Sprintf("begin error: %v", err))
+		return err
+	}
+	defer tx.Rollback()
+
+	//get
+	balance := models.Balance{}
+	row := tx.QueryRowContext(ctx, "SELECT id, current, withdrawn FROM balance WHERE user_id = $1", userID)
+	err = row.Scan(&balance.ID, &balance.Current, &balance.Withdrawn)
+	if err != nil {
+		logger.Log.Debug(nf, fmt.Sprintf("get balance error: %v", err))
+		return err
+	}
+
+	//compare
+	if balance.Current < wd.Sum {
+		return store.BalanceIsLow
+	}
+	balance.Current = balance.Current - wd.Sum
+	balance.Withdrawn = balance.Withdrawn + wd.Sum
+
+	//update
+	_, err = tx.ExecContext(ctx, "UPDATE balance SET current = $1, withdrawn = $2 WHERE id = $3 AND user_id = $4", balance.Current, balance.Withdrawn, balance.ID, userID)
+	if err != nil {
+		logger.Log.Debug(nf, fmt.Sprintf("update balance error: %v", err))
+		return err
+	}
+
+	_, err = s.db.ExecContext(ctx, "INSERT INTO withdrawals (order_number, sum, user_id) VALUES ($1, $2, $3)", wd.OrderNumber, wd.Sum, userID)
 	if err != nil {
 		logger.Log.Debug(nf, fmt.Sprintf("scan error: %v", err))
 		return err
 	}
-	return nil
+	return tx.Commit()
 }
 
 func (s *UserStore) Withdrawal(ctx context.Context) ([]*models.Withdrawal, error) {
+
 	const nf = "store get withdrawal "
 	userID := ctx.Value(router.UserId)
 	result := make([]*models.Withdrawal, 0)
@@ -179,6 +240,5 @@ func (s *UserStore) Withdrawal(ctx context.Context) ([]*models.Withdrawal, error
 		}
 		result = append(result, &tmp)
 	}
-
 	return result, nil
 }

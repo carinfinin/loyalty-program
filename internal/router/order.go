@@ -94,7 +94,24 @@ func (r *Router) OrderList(writer http.ResponseWriter, request *http.Request) {
 }
 
 func (r *Router) Balance(writer http.ResponseWriter, request *http.Request) {
+	const nf = "router get balance "
 
+	balance, err := r.service.Balance(request.Context())
+	if err != nil {
+		logger.Log.Error(nf, fmt.Sprintf(" error: %v", err))
+		http.Error(writer, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(http.StatusOK)
+
+	encoder := json.NewEncoder(writer)
+	if err = encoder.Encode(balance); err != nil {
+		http.Error(writer, "error write json", http.StatusInternalServerError)
+		return
+	}
+	return
 }
 
 func (r *Router) WithdrawalSave(writer http.ResponseWriter, request *http.Request) {
@@ -116,7 +133,6 @@ func (r *Router) WithdrawalSave(writer http.ResponseWriter, request *http.Reques
 		return
 	}
 
-	//todo проверка колва средств
 	err = r.service.WithdrawalSave(request.Context(), &w)
 	if err != nil {
 		logger.Log.Error(nf, fmt.Sprintf(" error: %v", err))
