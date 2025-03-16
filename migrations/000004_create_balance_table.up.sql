@@ -1,7 +1,7 @@
 CREATE TABLE balance (
                         id SERIAL PRIMARY KEY,
-                        current NUMERIC(20, 2) NOT NULL,
-                        withdrawn NUMERIC(20, 2) NOT NULL,
+                        current NUMERIC(20, 2) DEFAULT 0.00,
+                        withdrawn NUMERIC(20, 2) DEFAULT 0.00,
                         user_id INT REFERENCES users(id) ON DELETE SET NULL UNIQUE,
                         created_at TIMESTAMPTZ DEFAULT NOW()
 );

@@ -52,7 +52,8 @@ func (s *UserStore) User(ctx context.Context, login string) (*models.User, error
 }
 
 func (s *UserStore) SaveUser(ctx context.Context, login string, passHash []byte) (int64, error) {
-	r, err := s.db.ExecContext(ctx, "INSERT INTO users (login, password_hash) VALUES ($1, $2)", login, passHash)
+	var id int64
+	err := s.db.QueryRowContext(ctx, "INSERT INTO users (login, password_hash) VALUES ($1, $2) RETURNING id", login, passHash).Scan(&id)
 	if err != nil {
 		var errPG *pgconn.PgError
 		if errors.As(err, &errPG) && pgerrcode.IsIntegrityConstraintViolation(errPG.Code) {
@@ -62,7 +63,7 @@ func (s *UserStore) SaveUser(ctx context.Context, login string, passHash []byte)
 		return 0, err
 	}
 
-	return r.RowsAffected()
+	return id, nil
 }
 
 func (s *UserStore) SaveOrder(ctx context.Context, number int64, userID int64) error {
@@ -161,19 +162,32 @@ func (s *UserStore) Balance(ctx context.Context) (*models.Balance, error) {
 	return &balance, nil
 }
 
-func (s *UserStore) BalanceUpdate(ctx context.Context, b *models.Balance) error {
-	const nf = "store balance update "
-	query := `INSERT INTO balance (user_id, current, withdrawn)
-				VALUES ($1, $2, $3)
-				ON CONFLICT (user_id) DO UPDATE
-				SET current = EXCLUDED.current, withdrawn = EXCLUDED.withdrawn;`
-	userID := ctx.Value(router.UserId)
-	_, err := s.db.ExecContext(ctx, query, userID, b.Current, b.Withdrawn)
+func (s *UserStore) OrderBalanceUpdate(ctx context.Context, order *models.Order) error {
+	const nf = "store order and balance update "
+
+	tx, err := s.db.Begin()
 	if err != nil {
-		logger.Log.Debug(nf, fmt.Sprintf("query error: %v", err))
+		logger.Log.Debug(nf, fmt.Sprintf("begin error: %v", err))
 		return err
 	}
-	return nil
+	defer tx.Rollback()
+
+	_, err = tx.ExecContext(ctx, "UPDATE orders SET status = $1, accrual = $2 WHERE user_id = $3 AND number = $4", order.Status, order.Accrual, order.User, order.Number)
+	if err != nil {
+		logger.Log.Debug(nf, fmt.Sprintf("update order error: %v", err))
+		return err
+	}
+
+	query := `INSERT INTO balance (user_id, current)
+				VALUES ($1, $2)
+				ON CONFLICT (user_id) DO UPDATE
+				SET current = balance.current + EXCLUDED.current;`
+
+	_, err = s.db.ExecContext(ctx, query, order.User, order.Accrual)
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 func (s *UserStore) WithdrawalSave(ctx context.Context, wd *models.Withdrawal) error {
@@ -241,4 +255,7 @@ func (s *UserStore) Withdrawal(ctx context.Context) ([]*models.Withdrawal, error
 		result = append(result, &tmp)
 	}
 	return result, nil
+}
+func (s *UserStore) Close() error {
+	return s.db.Close()
 }

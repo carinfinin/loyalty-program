@@ -12,7 +12,7 @@ import (
 	"net/http"
 )
 
-func (r *Router) OrderHandler(writer http.ResponseWriter, request *http.Request) {
+func (r *Router) OrderSave(writer http.ResponseWriter, request *http.Request) {
 	const nf = "order handler"
 
 	/*	200 — номер заказа уже был загружен этим пользователем;

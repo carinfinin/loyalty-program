@@ -31,7 +31,6 @@ func main() {
 	}()
 
 	<-exit
-
+	//s.Service.Close()
 	logger.Log.Info("stop app")
-	// todo stoping
 }

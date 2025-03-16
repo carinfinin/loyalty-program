@@ -13,21 +13,21 @@ type Order struct {
 	Number  string    `json:"number"`
 	Status  string    `json:"status"`
 	Accrual float64   `json:"accrual,omitempty"`
-	User    int       `json:"-"`
+	User    int64     `json:"-"`
 	Created time.Time `json:"uploaded_at"`
 }
 
 type Balance struct {
-	ID        int       `json:"-"`
+	ID        int64     `json:"-"`
 	Current   float64   `json:"current"`
 	Withdrawn float64   `json:"withdrawn"`
-	UserID    int       `json:"-"`
+	UserID    int64     `json:"-"`
 	CreatedAt time.Time `json:"-"`
 }
 
 type Withdrawal struct {
 	OrderNumber string    `json:"order"`
-	User        int       `json:"-"`
+	User        int64     `json:"-"`
 	Sum         float64   `json:"sum"`
 	ProcessedAt time.Time `json:"processed_at"`
 }

@@ -21,11 +21,19 @@ func (s *Service) SaveOrder(ctx context.Context, number string, userID int64) er
 		logger.Log.Error(nf, err)
 		return err
 	}
+
+	order := models.Order{
+		Number: number,
+		User:   userID,
+		Status: "NEW",
+	}
+
+	s.chJob <- &order
+
 	return nil
 }
 
 func (s *Service) OrderList(ctx context.Context) ([]*models.Order, error) {
-
 	return s.store.OrderList(ctx)
 }
 

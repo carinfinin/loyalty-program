@@ -11,6 +11,7 @@ import (
 
 type Server struct {
 	*http.Server
+	Service *service.Service
 }
 
 func New(cfg *config.Config) *Server {
@@ -28,6 +29,7 @@ func New(cfg *config.Config) *Server {
 			WriteTimeout: cfg.WriteTimeout,
 			ReadTimeout:  cfg.ReadTimeout,
 		},
+		Service: service,
 	}
 }
 
