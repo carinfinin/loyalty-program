@@ -66,13 +66,13 @@ func (s *UserStore) SaveUser(ctx context.Context, login string, passHash []byte)
 	return id, nil
 }
 
-func (s *UserStore) SaveOrder(ctx context.Context, number int64, userID int64) error {
+func (s *UserStore) SaveOrder(ctx context.Context, number int64, userID int64) (int64, error) {
 	logger.Log.Debug("start Begin")
 	logger.Log.Debug("userID:", userID)
 
 	tx, err := s.db.Begin()
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer tx.Rollback()
 
@@ -84,26 +84,32 @@ func (s *UserStore) SaveOrder(ctx context.Context, number int64, userID int64) e
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Log.Debug("no data row start add row")
 
-			_, err = tx.ExecContext(ctx, "INSERT INTO orders (number, status, user_id) VALUES ($1, 'NEW', $2)", number, userID)
+			var orderID int64
+			err = tx.QueryRowContext(ctx, "INSERT INTO orders (number, status, user_id) VALUES ($1, 'NEW', $2) RETURNING id", number, userID).Scan(&orderID)
 			if err != nil {
 				logger.Log.Debug("add order error: ", err)
-				return err
+				return 0, err
+			}
+			err = tx.Commit()
+			if err != nil {
+				logger.Log.Debug("transaction committed error: ", err)
+				return 0, err
 			}
 			logger.Log.Debug("transaction committed successfully")
-			return tx.Commit()
+			return orderID, nil
 		}
-		return err
+		return 0, err
 	}
 	if err = row.Err(); err != nil {
 		fmt.Println("row err:", err)
-		return err
+		return 0, err
 	}
 	if id > 0 && id == userID {
 		logger.Log.Debug("error add order row double")
-		return store.Double
+		return 0, store.Double
 	}
 	logger.Log.Debug("error add order row busy")
-	return store.Busy
+	return 0, store.Busy
 
 }
 

@@ -16,13 +16,14 @@ func (s *Service) SaveOrder(ctx context.Context, number string, userID int64) er
 		return err
 	}
 
-	err = s.store.SaveOrder(ctx, num, userID)
+	id, err := s.store.SaveOrder(ctx, num, userID)
 	if err != nil {
 		logger.Log.Error(nf, err)
 		return err
 	}
 
 	order := models.Order{
+		ID:     id,
 		Number: number,
 		User:   userID,
 		Status: "NEW",

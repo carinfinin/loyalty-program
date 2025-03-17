@@ -15,7 +15,7 @@ var BalanceIsLow = errors.New("there are insufficient funds in the account")
 type Repository interface {
 	User(ctx context.Context, login string) (*models.User, error)
 	SaveUser(ctx context.Context, login string, passHash []byte) (int64, error)
-	SaveOrder(ctx context.Context, number int64, userID int64) error
+	SaveOrder(ctx context.Context, number int64, userID int64) (int64, error)
 	OrderList(ctx context.Context) ([]*models.Order, error)
 	WithdrawalSave(ctx context.Context, wd *models.Withdrawal) error
 	Withdrawal(ctx context.Context) ([]*models.Withdrawal, error)
