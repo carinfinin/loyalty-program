@@ -17,6 +17,12 @@ type Order struct {
 	Created time.Time `json:"uploaded_at"`
 }
 
+type OrderAccrual struct {
+	Number  string  `json:"order"`
+	Status  string  `json:"status"`
+	Accrual float64 `json:"accrual,omitempty"`
+}
+
 type Balance struct {
 	ID        int64     `json:"-"`
 	Current   float64   `json:"current"`

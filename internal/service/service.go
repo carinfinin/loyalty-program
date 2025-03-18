@@ -88,7 +88,7 @@ func (s *Service) job(order *models.Order) {
 		return
 	}
 
-	var newOrder models.Order
+	var newOrder models.OrderAccrual
 	decoder := json.NewDecoder(response.Body)
 	err = decoder.Decode(&newOrder)
 	if err != nil {
@@ -98,8 +98,11 @@ func (s *Service) job(order *models.Order) {
 		return
 	}
 	logger.Log.Debug(nf, fmt.Sprintf("new order: %v", newOrder))
-	s.chResult <- &newOrder
 
+	order.Status = newOrder.Status
+	order.Accrual = newOrder.Accrual
+
+	s.chResult <- order
 }
 
 func (s *Service) Inspector() {
