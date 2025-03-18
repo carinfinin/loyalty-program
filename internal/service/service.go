@@ -61,6 +61,11 @@ func (s *Service) job(order *models.Order) {
 	logger.Log.Info(nf, fmt.Sprintf("url: %v", url))
 
 	response, err := http.Get(url)
+	if err != nil {
+		logger.Log.Debug(nf, fmt.Sprintf("error: %v", err))
+		s.chResult <- order
+		return
+	}
 	defer response.Body.Close()
 
 	if response.StatusCode == http.StatusTooManyRequests {
@@ -73,10 +78,14 @@ func (s *Service) job(order *models.Order) {
 
 		s.retryAfter = time.Duration(ra)
 		s.chBreak <- struct{}{}
-	}
 
-	if err != nil {
-		logger.Log.Debug(nf, fmt.Sprintf("error: %v", err))
+		s.chResult <- order
+		return
+	}
+	if response.StatusCode == http.StatusNoContent {
+		logger.Log.Debug(nf, fmt.Sprintf("order no content status : %v", response.StatusCode))
+		s.chResult <- order
+		return
 	}
 
 	var newOrder models.Order
@@ -84,11 +93,11 @@ func (s *Service) job(order *models.Order) {
 	err = decoder.Decode(&newOrder)
 	if err != nil {
 		logger.Log.Debug(nf, fmt.Sprintf("status code : %v", response.StatusCode))
-
 		logger.Log.Error(nf, fmt.Sprintf("order decode error: %v", err))
+		s.chResult <- order
+		return
 	}
 	logger.Log.Debug(nf, fmt.Sprintf("new order: %v", newOrder))
-
 	s.chResult <- &newOrder
 
 }
