@@ -84,6 +84,7 @@ func (s *Service) job(order *models.Order) {
 	}
 	if response.StatusCode == http.StatusNoContent {
 		logger.Log.Debug(nf, fmt.Sprintf("order no content status : %v", response.StatusCode))
+		time.Sleep(1 * time.Second)
 		s.chResult <- order
 		return
 	}
