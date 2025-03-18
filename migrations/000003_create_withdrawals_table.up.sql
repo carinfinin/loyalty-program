@@ -1,4 +1,4 @@
-CREATE TABLE withdrawals (
+CREATE TABLE IF NOT EXISTS withdrawals (
                         id SERIAL PRIMARY KEY,
                         sum NUMERIC(20, 2) NOT NULL,
                         order_number VARCHAR(50) UNIQUE NOT NULL,

@@ -1,4 +1,4 @@
-CREATE TABLE balance (
+CREATE TABLE IF NOT EXISTS balance (
                         id SERIAL PRIMARY KEY,
                         current NUMERIC(20, 2) DEFAULT 0.00,
                         withdrawn NUMERIC(20, 2) DEFAULT 0.00,
