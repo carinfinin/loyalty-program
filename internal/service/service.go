@@ -48,14 +48,14 @@ func (s *Service) Worker() {
 		case order := <-s.chJob:
 			go s.job(order)
 		case <-s.chBreak:
-			logger.Log.Debug("servide Worker s.retryAfter: ", s.retryAfter)
+			logger.Log.Debug("service Worker s.retryAfter: ", s.retryAfter)
 			time.Sleep(s.retryAfter)
 		}
 	}
 }
 
 func (s *Service) job(order *models.Order) {
-	const nf = "service job"
+	const nf = "service job "
 
 	url := fmt.Sprintf("%s/api/orders/%d", s.Config.AccrualAddr, order.ID)
 	logger.Log.Info(nf, fmt.Sprintf("url: %v", url))
@@ -79,14 +79,17 @@ func (s *Service) job(order *models.Order) {
 		logger.Log.Debug(nf, fmt.Sprintf("error: %v", err))
 	}
 
-	encoder := json.NewDecoder(response.Body)
-	err = encoder.Decode(order)
+	var newOrder models.Order
+	decoder := json.NewDecoder(response.Body)
+	err = decoder.Decode(&newOrder)
 	if err != nil {
+		logger.Log.Debug(nf, fmt.Sprintf("status code : %v", response.StatusCode))
+
 		logger.Log.Error(nf, fmt.Sprintf("order decode error: %v", err))
 	}
-	logger.Log.Debug(nf, fmt.Sprintf("new order: %v", order))
+	logger.Log.Debug(nf, fmt.Sprintf("new order: %v", newOrder))
 
-	s.chResult <- order
+	s.chResult <- &newOrder
 
 }
 
