@@ -113,7 +113,7 @@ func (s *Service) Inspector() {
 
 			fmt.Println("Inspector order : ", order)
 
-			if order.Status == "PROCESSING" || order.Status == "REGISTERED" {
+			if order.Status == "PROCESSING" || order.Status == "REGISTERED" || order.Status == "NEW" {
 				s.chJob <- order
 			}
 
