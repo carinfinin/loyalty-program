@@ -57,7 +57,7 @@ func (s *Service) Worker() {
 func (s *Service) job(order *models.Order) {
 	const nf = "service job "
 
-	url := fmt.Sprintf("%s/api/orders/%d", s.Config.AccrualAddr, order.ID)
+	url := fmt.Sprintf("%s/api/orders/%d", s.Config.AccrualAddr, order.Number)
 	logger.Log.Info(nf, fmt.Sprintf("url: %v", url))
 
 	response, err := http.Get(url)
