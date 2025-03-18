@@ -48,11 +48,10 @@ func (s *Service) Worker() {
 		case order := <-s.chJob:
 			go s.job(order)
 		case <-s.chBreak:
+			logger.Log.Debug("servide Worker s.retryAfter: ", s.retryAfter)
 			time.Sleep(s.retryAfter)
-
 		}
 	}
-	//timer := time.NewTicker(60 * time.Second)
 }
 
 func (s *Service) job(order *models.Order) {

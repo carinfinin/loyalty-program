@@ -1,9 +1,9 @@
 run:
-	@echo "Запуск приложения..."
+	@echo "Start app"
 	go run ./cmd/gophermart/main.go
 
 build:
-	@echo "Сборка приложения..."
+	@echo "Build app"
 	go build -o ./cmd/gophermart/main.go
 all:
 	@echo "Start build app"
