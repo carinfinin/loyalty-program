@@ -13,6 +13,17 @@ import (
 	"time"
 )
 
+type ServiceInterface interface {
+	Close() error
+	Register(ctx context.Context, user *models.User) (string, error)
+	Login(ctx context.Context, user *models.User) (string, error)
+	Withdrawal(ctx context.Context) ([]*models.Withdrawal, error)
+	WithdrawalSave(ctx context.Context, withdrawal *models.Withdrawal) error
+	Balance(ctx context.Context) (*models.Balance, error)
+	OrderList(ctx context.Context) ([]*models.Order, error)
+	SaveOrder(ctx context.Context, number string, userID int64) error
+}
+
 type Service struct {
 	store      store.Repository
 	Config     *config.Config
