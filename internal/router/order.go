@@ -37,9 +37,9 @@ func (r *Router) OrderSave(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 	ctx := request.Context()
-	logger.Log.Debug(nf, "get userId from context: ", ctx.Value(UserId))
+	logger.Log.Debug(nf, "get userId from context: ", ctx.Value(UserID))
 
-	id, ok := ctx.Value(UserId).(int64)
+	id, ok := ctx.Value(UserID).(int64)
 	if !ok {
 		logger.Log.Error(nf, fmt.Sprintf("user id = %v not get in context", id))
 		writer.WriteHeader(http.StatusInternalServerError)
