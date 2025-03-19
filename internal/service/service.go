@@ -42,8 +42,8 @@ func New(cfg *config.Config, store store.Repository) *Service {
 		chBreak:  make(chan struct{}),
 	}
 
-	go service.Worker()
-	go service.Inspector()
+	go service.Worker(context.Background())
+	go service.Inspector(context.Background())
 
 	return &service
 }
@@ -52,7 +52,7 @@ func (s *Service) Close() error {
 	return s.store.Close()
 }
 
-func (s *Service) Worker() {
+func (s *Service) Worker(ctx context.Context) {
 
 	for {
 		select {
@@ -61,6 +61,8 @@ func (s *Service) Worker() {
 		case <-s.chBreak:
 			logger.Log.Debug("service Worker s.retryAfter: ", s.retryAfter)
 			time.Sleep(s.retryAfter)
+		case <-ctx.Done():
+			return
 		}
 	}
 }
@@ -117,7 +119,7 @@ func (s *Service) job(order *models.Order) {
 	s.chResult <- order
 }
 
-func (s *Service) Inspector() {
+func (s *Service) Inspector(ctx context.Context) {
 
 	for {
 		select {
@@ -135,6 +137,10 @@ func (s *Service) Inspector() {
 					logger.Log.Error("OrderBalanceUpdate error: ", err)
 				}
 			}
+		case <-ctx.Done():
+			return
+		default:
+			time.Sleep(1 * time.Second)
 		}
 	}
 }
