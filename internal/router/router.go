@@ -5,16 +5,15 @@ import (
 	"github.com/carinfinin/loyalty-program/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"net/http"
 )
 
 type Router struct {
 	Handler *chi.Mux
-	service *service.Service
+	service service.ServiceInterface
 	Config  *config.Config
 }
 
-func New(cfg *config.Config, service *service.Service) *Router {
+func New(cfg *config.Config, service service.ServiceInterface) *Router {
 	return &Router{
 		Handler: chi.NewRouter(),
 		service: service,
@@ -22,13 +21,13 @@ func New(cfg *config.Config, service *service.Service) *Router {
 	}
 }
 
-func Configure(cfg *config.Config, service *service.Service) *Router {
+func Configure(cfg *config.Config, service service.ServiceInterface) *Router {
 	r := New(cfg, service)
 
 	r.Handler.Use(middleware.Compress(5, "text/html", "text/plain", "application/json"))
 	r.Handler.Route("/api/user", func(cr chi.Router) {
-		cr.Post("/register", r.RegisterHandler)
-		cr.Post("/login", r.LoginHandler)
+		cr.Post("/register", r.Register)
+		cr.Post("/login", r.Login)
 
 		cr.With(r.AuthMiddleware).Post("/orders", r.OrderSave)
 		cr.With(r.AuthMiddleware).Get("/orders", r.OrderList)
@@ -37,8 +36,4 @@ func Configure(cfg *config.Config, service *service.Service) *Router {
 		cr.With(r.AuthMiddleware).Get("/withdrawals", r.Withdrawal)
 	})
 	return r
-}
-
-func (r *Router) Test(writer http.ResponseWriter, request *http.Request) {
-	writer.Write([]byte("test"))
 }

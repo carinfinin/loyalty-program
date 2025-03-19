@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func (r *Router) RegisterHandler(writer http.ResponseWriter, request *http.Request) {
+func (r *Router) Register(writer http.ResponseWriter, request *http.Request) {
 
 	const nf = "register handler"
 

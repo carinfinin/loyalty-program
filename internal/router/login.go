@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func (r *Router) LoginHandler(writer http.ResponseWriter, request *http.Request) {
+func (r *Router) Login(writer http.ResponseWriter, request *http.Request) {
 	const nf = "login handler"
 
 	var u models.User
