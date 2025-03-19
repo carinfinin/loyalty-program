@@ -48,7 +48,7 @@ func TestRouter_Login(t *testing.T) {
 
 			router.Login(writer, request)
 			result := writer.Result()
-
+			result.Body.Close()
 			assert.Equal(t, result.StatusCode, 200)
 		})
 	}
