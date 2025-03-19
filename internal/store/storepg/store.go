@@ -224,7 +224,7 @@ func (s *UserStore) WithdrawalSave(ctx context.Context, wd *models.Withdrawal) e
 
 	//compare
 	if balance.Current < wd.Sum {
-		return store.BalanceIsLow
+		return store.BalanceLow
 	}
 	balance.Current = balance.Current - wd.Sum
 	balance.Withdrawn = balance.Withdrawn + wd.Sum

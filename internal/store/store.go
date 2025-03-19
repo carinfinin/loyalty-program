@@ -10,7 +10,7 @@ var ErrDouble = errors.New("login already taken")
 var ErrNotAuth = errors.New("Invalid login password pair")
 var Double = errors.New("rows double")
 var Busy = errors.New("uploaded by another user")
-var BalanceIsLow = errors.New("there are insufficient funds in the account")
+var BalanceLow = errors.New("there are insufficient funds in the account")
 
 type Repository interface {
 	User(ctx context.Context, login string) (*models.User, error)
