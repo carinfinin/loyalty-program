@@ -106,10 +106,10 @@ func (s *UserStore) SaveOrder(ctx context.Context, number int64, userID int64) (
 	}
 	if id > 0 && id == userID {
 		logger.Log.Debug("error add order row double")
-		return 0, store.Double
+		return 0, store.ErrRowDouble
 	}
 	logger.Log.Debug("error add order row busy")
-	return 0, store.Busy
+	return 0, store.ErrBusy
 
 }
 
@@ -224,7 +224,7 @@ func (s *UserStore) WithdrawalSave(ctx context.Context, wd *models.Withdrawal) e
 
 	//compare
 	if balance.Current < wd.Sum {
-		return store.BalanceLow
+		return store.ErrBalanceLow
 	}
 	balance.Current = balance.Current - wd.Sum
 	balance.Withdrawn = balance.Withdrawn + wd.Sum

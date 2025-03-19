@@ -38,10 +38,10 @@ func (r *Router) OrderSave(writer http.ResponseWriter, request *http.Request) {
 	}
 	err = r.service.SaveOrder(ctx, string(data), id)
 	if err != nil {
-		if errors.Is(err, store.Busy) {
+		if errors.Is(err, store.ErrBusy) {
 			writer.WriteHeader(http.StatusConflict)
 			return
-		} else if errors.Is(err, store.Double) {
+		} else if errors.Is(err, store.ErrRowDouble) {
 			writer.WriteHeader(http.StatusOK)
 			return
 		}
