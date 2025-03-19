@@ -116,7 +116,7 @@ func (s *UserStore) SaveOrder(ctx context.Context, number int64, userID int64) (
 func (s *UserStore) OrderList(ctx context.Context) ([]*models.Order, error) {
 	const nf = "store order list"
 	result := make([]*models.Order, 0)
-	userID := ctx.Value(router.UserId)
+	userID := ctx.Value(router.UserID)
 
 	rows, err := s.db.QueryContext(ctx, "SELECT number, status, accrual, created_at FROM orders WHERE user_id = $1 ORDER BY created_at DESC", userID)
 	if err != nil {
@@ -148,7 +148,7 @@ func (s *UserStore) OrderList(ctx context.Context) ([]*models.Order, error) {
 func (s *UserStore) Balance(ctx context.Context) (*models.Balance, error) {
 	const nf = "store get balance"
 	balance := models.Balance{}
-	userID := ctx.Value(router.UserId)
+	userID := ctx.Value(router.UserID)
 
 	row := s.db.QueryRowContext(ctx, "SELECT current, withdrawn FROM balance WHERE user_id = $1", userID)
 	err := row.Scan(&balance.Current, &balance.Withdrawn)
@@ -199,7 +199,7 @@ func (s *UserStore) OrderBalanceUpdate(ctx context.Context, order *models.Order)
 func (s *UserStore) WithdrawalSave(ctx context.Context, wd *models.Withdrawal) error {
 	const nf = "store withdrawal save "
 
-	userID := ctx.Value(router.UserId)
+	userID := ctx.Value(router.UserID)
 
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -242,7 +242,7 @@ func (s *UserStore) WithdrawalSave(ctx context.Context, wd *models.Withdrawal) e
 func (s *UserStore) Withdrawal(ctx context.Context) ([]*models.Withdrawal, error) {
 
 	const nf = "store get withdrawal "
-	userID := ctx.Value(router.UserId)
+	userID := ctx.Value(router.UserID)
 	result := make([]*models.Withdrawal, 0)
 	rows, err := s.db.QueryContext(ctx, "SELECT order_number, sum, processed_at FROM withdrawals WHERE user_id = $1 ORDER BY processed_at DESC", userID)
 	if err != nil {

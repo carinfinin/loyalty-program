@@ -9,7 +9,7 @@ import (
 
 type keyUserID string
 
-const UserId keyUserID = "userID"
+const UserID keyUserID = "userID"
 
 func (r *Router) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -28,7 +28,7 @@ func (r *Router) AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		logger.Log.Debug("AuthMiddleware UserId: ", id)
-		ctx := context.WithValue(request.Context(), UserId, id)
+		ctx := context.WithValue(request.Context(), UserID, id)
 		newReq := request.WithContext(ctx)
 		next.ServeHTTP(writer, newReq)
 	})
