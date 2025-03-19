@@ -15,15 +15,6 @@ import (
 func (r *Router) OrderSave(writer http.ResponseWriter, request *http.Request) {
 	const nf = "order handler"
 
-	/*	200 — номер заказа уже был загружен этим пользователем;
-		202 — новый номер заказа принят в обработку;
-		400 — неверный формат запроса;
-		401 — пользователь не аутентифицирован;
-		409 — номер заказа уже был загружен другим пользователем;
-		422 — неверный формат номера заказа;
-		500 — внутренняя ошибка сервера.
-	*/
-
 	data, err := io.ReadAll(request.Body)
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
@@ -61,17 +52,10 @@ func (r *Router) OrderSave(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	writer.WriteHeader(http.StatusAccepted)
-	return
 }
 
 func (r *Router) OrderList(writer http.ResponseWriter, request *http.Request) {
 	const nf = "order list"
-
-	/*
-		204 — нет данных для ответа.
-		401 — пользователь не авторизован.
-		500 — внутренняя ошибка сервера.
-	*/
 
 	result, err := r.service.OrderList(request.Context())
 	if err != nil {
@@ -90,7 +74,6 @@ func (r *Router) OrderList(writer http.ResponseWriter, request *http.Request) {
 		http.Error(writer, "error write json", http.StatusInternalServerError)
 		return
 	}
-	return
 }
 
 func (r *Router) Balance(writer http.ResponseWriter, request *http.Request) {
@@ -111,7 +94,6 @@ func (r *Router) Balance(writer http.ResponseWriter, request *http.Request) {
 		http.Error(writer, "error write json", http.StatusInternalServerError)
 		return
 	}
-	return
 }
 
 func (r *Router) WithdrawalSave(writer http.ResponseWriter, request *http.Request) {
@@ -141,7 +123,6 @@ func (r *Router) WithdrawalSave(writer http.ResponseWriter, request *http.Reques
 	}
 
 	writer.WriteHeader(http.StatusOK)
-	return
 }
 
 func (r *Router) Withdrawal(writer http.ResponseWriter, request *http.Request) {
@@ -164,5 +145,4 @@ func (r *Router) Withdrawal(writer http.ResponseWriter, request *http.Request) {
 		http.Error(writer, "error write json", http.StatusInternalServerError)
 		return
 	}
-	return
 }
