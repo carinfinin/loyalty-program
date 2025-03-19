@@ -27,7 +27,7 @@ func Decode(token string, cfg *config.Config) (int64, error) {
 	claims := jwt.MapClaims{}
 	tp, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Неожиданный метод подписи: %v", token.Header["alg"])
+			return nil, fmt.Errorf("неожиданный метод подписи: %v", token.Header["alg"])
 		}
 		return []byte(cfg.Secret), nil
 	})
