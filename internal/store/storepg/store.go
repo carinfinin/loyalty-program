@@ -142,6 +142,11 @@ func (s *UserStore) OrderList(ctx context.Context) ([]*models.Order, error) {
 
 		result = append(result, &order)
 	}
+	err = rows.Err()
+	if err != nil {
+		logger.Log.Debug(nf, fmt.Sprintf("rows.Err error: %v", err))
+		return nil, err
+	}
 	return result, nil
 }
 
@@ -259,6 +264,11 @@ func (s *UserStore) Withdrawal(ctx context.Context) ([]*models.Withdrawal, error
 			return nil, err
 		}
 		result = append(result, &tmp)
+	}
+	err = rows.Err()
+	if err != nil {
+		logger.Log.Debug(nf, fmt.Sprintf("rows.Err error: %v", err))
+		return nil, err
 	}
 	return result, nil
 }
