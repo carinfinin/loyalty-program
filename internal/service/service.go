@@ -158,7 +158,10 @@ func (s *Service) Inspector(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			return
+			err := s.store.OrderBalanceUpdate(context.Background(), orders)
+			if err != nil {
+				logger.Log.Error("OrderBalanceUpdate error: ", err)
+			}
 		default:
 			time.Sleep(1 * time.Second)
 		}
