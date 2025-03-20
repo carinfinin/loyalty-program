@@ -20,6 +20,6 @@ type Repository interface {
 	WithdrawalSave(ctx context.Context, wd *models.Withdrawal) error
 	Withdrawal(ctx context.Context) ([]*models.Withdrawal, error)
 	Balance(ctx context.Context) (*models.Balance, error)
-	OrderBalanceUpdate(ctx context.Context, order *models.Order) error
+	OrderBalanceUpdate(ctx context.Context, orders []*models.Order) error
 	Close() error
 }

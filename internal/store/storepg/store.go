@@ -173,7 +173,7 @@ func (s *UserStore) Balance(ctx context.Context) (*models.Balance, error) {
 	return &balance, nil
 }
 
-func (s *UserStore) OrderBalanceUpdate(ctx context.Context, order *models.Order) error {
+func (s *UserStore) OrderBalanceUpdate(ctx context.Context, orders []*models.Order) error {
 	const nf = "store order and balance update "
 
 	tx, err := s.db.Begin()
@@ -183,21 +183,24 @@ func (s *UserStore) OrderBalanceUpdate(ctx context.Context, order *models.Order)
 	}
 	defer tx.Rollback()
 
-	_, err = tx.ExecContext(ctx, "UPDATE orders SET status = $1, accrual = $2 WHERE user_id = $3 AND number = $4", order.Status, order.Accrual, order.User, order.Number)
-	if err != nil {
-		logger.Log.Debug(nf, fmt.Sprintf("update order error: %v", err))
-		return err
-	}
+	for _, order := range orders {
+		_, err = tx.ExecContext(ctx, "UPDATE orders SET status = $1, accrual = $2 WHERE user_id = $3 AND number = $4", order.Status, order.Accrual, order.User, order.Number)
+		if err != nil {
+			logger.Log.Debug(nf, fmt.Sprintf("update order error: %v", err))
+			return err
+		}
 
-	query := `INSERT INTO balance (user_id, current)
+		query := `INSERT INTO balance (user_id, current)
 				VALUES ($1, $2)
 				ON CONFLICT (user_id) DO UPDATE
 				SET current = balance.current + EXCLUDED.current;`
 
-	_, err = s.db.ExecContext(ctx, query, order.User, order.Accrual)
-	if err != nil {
-		return err
+		_, err = s.db.ExecContext(ctx, query, order.User, order.Accrual)
+		if err != nil {
+			return err
+		}
 	}
+
 	return tx.Commit()
 }
 

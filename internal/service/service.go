@@ -49,15 +49,26 @@ func New(cfg *config.Config, store store.Repository) *Service {
 }
 
 func (s *Service) Close() error {
+
+	s.chJob = nil
+	s.chResult = nil
+	s.chBreak = nil
 	return s.store.Close()
 }
 
 func (s *Service) Worker(ctx context.Context) {
+	semaphore := make(chan struct{}, 10)
 
 	for {
 		select {
 		case order := <-s.chJob:
-			go s.job(order)
+			semaphore <- struct{}{}
+			go func(o *models.Order) {
+				defer func() {
+					<-semaphore
+				}()
+				s.job(o)
+			}(order)
 		case <-s.chBreak:
 			logger.Log.Debug("service Worker s.retryAfter: ", s.retryAfter)
 			time.Sleep(s.retryAfter)
@@ -121,6 +132,9 @@ func (s *Service) job(order *models.Order) {
 
 func (s *Service) Inspector(ctx context.Context) {
 
+	orders := make([]*models.Order, 0, 200)
+	ticker := time.NewTicker(5 * time.Second)
+
 	for {
 		select {
 		case order := <-s.chResult:
@@ -132,12 +146,18 @@ func (s *Service) Inspector(ctx context.Context) {
 			}
 
 			if order.Status != "REGISTERED" {
-				err := s.store.OrderBalanceUpdate(context.Background(), order)
-				if err != nil {
-					logger.Log.Error("OrderBalanceUpdate error: ", err)
+				orders = append(orders, order)
+				if len(orders) == 100 {
+					err := s.store.OrderBalanceUpdate(context.Background(), orders)
+					if err != nil {
+						logger.Log.Error("OrderBalanceUpdate error: ", err)
+					}
+					ticker.Reset(5 * time.Second)
 				}
 			}
 		case <-ctx.Done():
+			return
+		case <-ticker.C:
 			return
 		default:
 			time.Sleep(1 * time.Second)
