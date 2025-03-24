@@ -34,10 +34,12 @@ func TestOrder(t *testing.T) {
 	response, err := client.Do(request)
 	assert.NoError(t, err)
 	fmt.Println(response.StatusCode)
+	response.Body.Close()
 
 	request, err = http.NewRequest(http.MethodGet, "http://localhost:8080/api/user/orders", nil)
 	assert.NoError(t, err)
 	response, err = client.Do(request)
+	defer response.Body.Close()
 	assert.NoError(t, err)
 
 	fmt.Println(response.StatusCode)
