@@ -190,12 +190,14 @@ func (s *Service) job(order *models.Order) {
 }
 
 func (s *Service) getOrderForWorker() {
+
 	const nf = "service get order for worker"
 	orders, err := s.store.Order(context.Background())
 	if err != nil {
-		logger.Log.Info(nf, fmt.Sprintf("error get orders: ", err))
+		logger.Log.Info(nf, fmt.Sprintf("error get orders: %v", err))
 		return
 	}
+
 	if len(orders) > 0 {
 		for _, order := range orders {
 			s.chJob <- order
