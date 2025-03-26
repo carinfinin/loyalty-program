@@ -23,6 +23,7 @@ type ServiceInterface interface {
 	Balance(ctx context.Context) (*models.Balance, error)
 	OrderList(ctx context.Context) ([]*models.Order, error)
 	SaveOrder(ctx context.Context, number string, userID int64) error
+	GetOrderForWorker(ctx context.Context)
 }
 
 type Service struct {
@@ -47,7 +48,7 @@ func New(cfg *config.Config, store store.Repository) *Service {
 	ctx, cancel := context.WithCancel(context.Background())
 	service.shotDown = cancel
 
-	go service.getOrderForWorker()
+	go service.GetOrderForWorker(context.Background())
 	go service.Worker(ctx)
 	go service.Inspector(ctx)
 
@@ -189,10 +190,10 @@ func (s *Service) job(order *models.Order) {
 	s.chResult <- order
 }
 
-func (s *Service) getOrderForWorker() {
+func (s *Service) GetOrderForWorker(ctx context.Context) {
 
 	const nf = "service get order for worker"
-	orders, err := s.store.Order(context.Background())
+	orders, err := s.store.Order(ctx)
 	if err != nil {
 		logger.Log.Info(nf, fmt.Sprintf("error get orders: %v", err))
 		return

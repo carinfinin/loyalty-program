@@ -62,6 +62,11 @@ func (_m *ServiceInterface) Close() error {
 	return r0
 }
 
+// GetOrderForWorker provides a mock function with given fields: ctx
+func (_m *ServiceInterface) GetOrderForWorker(ctx context.Context) {
+	_m.Called(ctx)
+}
+
 // Login provides a mock function with given fields: ctx, user
 func (_m *ServiceInterface) Login(ctx context.Context, user *models.User) (string, error) {
 	ret := _m.Called(ctx, user)

@@ -5,6 +5,7 @@ import (
 	"github.com/carinfinin/loyalty-program/internal/config"
 	"github.com/carinfinin/loyalty-program/internal/store"
 	"github.com/carinfinin/loyalty-program/internal/store/mocks"
+	"github.com/carinfinin/loyalty-program/internal/store/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"
@@ -30,9 +31,8 @@ func TestSaveOrder(t *testing.T) {
 			Data: data{1, "1208"},
 			Repo: func() *mocks.Repository {
 				repo := &mocks.Repository{}
-				repo.On(
-					"SaveOrder", mock.Anything, int64(1208), int64(1),
-				).Return(int64(1), nil)
+				repo.On("SaveOrder", mock.Anything, int64(1208), int64(1)).Return(int64(1), nil)
+				repo.On("Order", mock.Anything).Return([]*models.Order{}, nil)
 				return repo
 			}(),
 			expectError: false,
@@ -42,9 +42,8 @@ func TestSaveOrder(t *testing.T) {
 			Data: data{0, "1406"},
 			Repo: func() *mocks.Repository {
 				repo := &mocks.Repository{}
-				repo.On(
-					"SaveOrder", mock.Anything, int64(1406), int64(0),
-				).Return(int64(0), store.ErrUserNotFound)
+				repo.On("SaveOrder", mock.Anything, int64(1406), int64(0)).Return(int64(0), store.ErrUserNotFound)
+				repo.On("Order", mock.Anything).Return([]*models.Order{}, nil)
 				return repo
 			}(),
 			expectError: true,
