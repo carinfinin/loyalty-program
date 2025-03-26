@@ -12,7 +12,7 @@ import (
 
 func TestSaveOrder(t *testing.T) {
 
-	cfg := config.MewForTest()
+	cfg := config.NewForTest()
 
 	type data struct {
 		userID int64

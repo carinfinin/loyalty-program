@@ -36,7 +36,6 @@ func (r *Router) Login(writer http.ResponseWriter, request *http.Request) {
 		http.Error(writer, "error saved", http.StatusInternalServerError)
 		return
 	}
-	logger.Log.Info(nf, fmt.Sprintf(" token: %v", token))
 
 	cookie := &http.Cookie{
 		Name:     jwtc.AuthCookie,

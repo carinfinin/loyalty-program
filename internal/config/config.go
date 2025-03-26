@@ -44,7 +44,7 @@ func New() (*Config, error) {
 	return &cfg, nil
 }
 
-func MewForTest() *Config {
+func NewForTest() *Config {
 	var cfg = Config{}
 	return &cfg
 }

@@ -15,6 +15,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"sync"
 )
 
 type UserStore struct {
@@ -217,6 +218,9 @@ func (s *UserStore) OrderBalanceUpdate(ctx context.Context, orders []*models.Ord
 }
 
 func (s *UserStore) WithdrawalSave(ctx context.Context, wd *models.Withdrawal) error {
+
+	mu := sync.Mutex{}
+
 	const nf = "store withdrawal save "
 
 	userID := ctx.Value(router.UserID)
@@ -224,6 +228,9 @@ func (s *UserStore) WithdrawalSave(ctx context.Context, wd *models.Withdrawal) e
 	if userID == 0 {
 		return store.ErrUserNotFound
 	}
+
+	mu.Lock()
+	defer mu.Unlock()
 
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -294,6 +301,43 @@ func (s *UserStore) Withdrawal(ctx context.Context) ([]*models.Withdrawal, error
 	}
 	return result, nil
 }
+
 func (s *UserStore) Close() error {
 	return s.db.Close()
+}
+
+func (s *UserStore) Order(ctx context.Context) ([]*models.Order, error) {
+	const nf = "store Order"
+	result := make([]*models.Order, 0)
+
+	rows, err := s.db.QueryContext(ctx, "SELECT number, status, accrual, user_id FROM orders WHERE status NOT IN ('INVALID', 'PROCESSED') ORDER BY created_at ASC")
+	if err != nil {
+		logger.Log.Debug(nf, fmt.Sprintf("query error: %v", err))
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var order models.Order
+		var accrual sql.NullFloat64
+
+		err = rows.Scan(&order.Number, &order.Status, &accrual, &order.User)
+		if err != nil {
+			logger.Log.Debug(nf, fmt.Sprintf("scan error: %v", err))
+			return nil, err
+		}
+		if accrual.Valid {
+			order.Accrual = accrual.Float64
+		} else {
+			order.Accrual = 0
+		}
+
+		result = append(result, &order)
+	}
+	err = rows.Err()
+	if err != nil {
+		logger.Log.Debug(nf, fmt.Sprintf("rows.Err error: %v", err))
+		return nil, err
+	}
+	return result, nil
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"github.com/carinfinin/loyalty-program/internal/config"
 	"github.com/carinfinin/loyalty-program/internal/logger"
 	"github.com/carinfinin/loyalty-program/internal/server"
@@ -39,7 +40,15 @@ func main() {
 	}()
 
 	<-exit
-	s.Service.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.WriteTimeout)
+	defer cancel()
+
+	if err = s.Shutdown(ctx); err != nil {
+		logger.Log.Info("stop shutdown error")
+		s.Close()
+	}
+
 	logger.Log.Info("stop app")
 }
 
