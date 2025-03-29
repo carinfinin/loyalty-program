@@ -12,7 +12,7 @@ all:
 cover:
 	go test -short -count=1 -coverprofile=coverage.out ./internal/... ./cmd/...
 	go tool cover -html=coverage.out
-	rm coverage.out
+	rm ./coverage.out
 migrate:
 	@echo "Start migrate up"
 	migrate -path migrations -database "postgres://user:password@localhost:5432/loyalty?sslmode=disable" up
