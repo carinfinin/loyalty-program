@@ -58,7 +58,7 @@ func TestOrder(t *testing.T) {
 
 	//login
 	buffer = strings.NewReader(string(userJSON))
-	request, err = http.NewRequest(http.MethodPost, "http://localhost:8080/api/user/", buffer)
+	request, err = http.NewRequest(http.MethodPost, "http://localhost:8080/api/user/login", buffer)
 	assert.NoError(t, err)
 	request.Header.Add("Content-Type", "application/json")
 	response, err = client.Do(request)
