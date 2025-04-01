@@ -2,7 +2,6 @@ package tests
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/carinfinin/loyalty-program/internal/store/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,32 +13,60 @@ import (
 
 func TestOrder(t *testing.T) {
 
-	user := models.User{
-		Login:    "tes",
-		Password: "333",
-	}
-
 	jar, err := cookiejar.New(nil)
 	require.NoError(t, err)
 	client := &http.Client{
 		Jar: jar,
 	}
 
-	userJSON, err := json.Marshal(user)
+	//create order err
+	buffer := strings.NewReader("0505")
+	request, err := http.NewRequest(http.MethodPost, "http://localhost:8080/api/user/orders", buffer)
 	assert.NoError(t, err)
-	buffer := strings.NewReader(string(userJSON))
-
-	//register
-	request, err := http.NewRequest(http.MethodPost, "http://localhost:8080/api/user/register", buffer)
-	assert.NoError(t, err)
-	request.Header.Add("Content-Type", "application/json")
 	response, err := client.Do(request)
 	assert.NoError(t, err)
-	fmt.Println(response.StatusCode)
+	assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
+
+	user := models.User{
+		Login:    "tes02",
+		Password: "33302",
+	}
+
+	userJSON, err := json.Marshal(&user)
+	assert.NoError(t, err)
+	buffer = strings.NewReader(string(userJSON))
+
+	//register
+	request, err = http.NewRequest(http.MethodPost, "http://localhost:8080/api/user/register", buffer)
+	assert.NoError(t, err)
+	request.Header.Add("Content-Type", "application/json")
+	response, err = client.Do(request)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	response.Body.Close()
+
+	//register
+	buffer = strings.NewReader(string(userJSON))
+	request, err = http.NewRequest(http.MethodPost, "http://localhost:8080/api/user/register", buffer)
+	assert.NoError(t, err)
+	request.Header.Add("Content-Type", "application/json")
+	response, err = client.Do(request)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusConflict, response.StatusCode)
+	response.Body.Close()
+
+	//login
+	buffer = strings.NewReader(string(userJSON))
+	request, err = http.NewRequest(http.MethodPost, "http://localhost:8080/api/user/", buffer)
+	assert.NoError(t, err)
+	request.Header.Add("Content-Type", "application/json")
+	response, err = client.Do(request)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, response.StatusCode)
 	response.Body.Close()
 
 	//create order
-	buffer = strings.NewReader("0109")
+	buffer = strings.NewReader("0604")
 	request, err = http.NewRequest(http.MethodPost, "http://localhost:8080/api/user/orders", buffer)
 	assert.NoError(t, err)
 	response, err = client.Do(request)

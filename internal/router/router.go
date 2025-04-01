@@ -27,7 +27,7 @@ func Configure(cfg *config.Config, service service.ServiceInterface) *Router {
 	r.Handler.Use(middleware.Compress(5, "text/html", "text/plain", "application/json"))
 	r.Handler.Route("/api/user", func(cr chi.Router) {
 		cr.Post("/register", r.Register)
-		cr.Post("/login", r.Login)
+		cr.Post("/", r.Login)
 
 		cr.With(r.AuthMiddleware).Post("/orders", r.OrderSave)
 		cr.With(r.AuthMiddleware).Get("/orders", r.OrderList)
