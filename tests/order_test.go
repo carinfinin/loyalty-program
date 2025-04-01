@@ -20,12 +20,13 @@ func TestOrder(t *testing.T) {
 	}
 
 	//create order err
-	buffer := strings.NewReader("0505")
+	buffer := strings.NewReader("050500000000")
 	request, err := http.NewRequest(http.MethodPost, "http://localhost:8080/api/user/orders", buffer)
 	assert.NoError(t, err)
 	response, err := client.Do(request)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
+	response.Body.Close()
 
 	user := models.User{
 		Login:    "tes02",
@@ -66,13 +67,13 @@ func TestOrder(t *testing.T) {
 	response.Body.Close()
 
 	//create order
-	buffer = strings.NewReader("0604")
+	buffer = strings.NewReader("050500000000")
 	request, err = http.NewRequest(http.MethodPost, "http://localhost:8080/api/user/orders", buffer)
 	assert.NoError(t, err)
 	response, err = client.Do(request)
 	assert.NoError(t, err)
-	response.Body.Close()
 	assert.Equal(t, http.StatusAccepted, response.StatusCode)
+	response.Body.Close()
 
 	// get orders
 	request, err = http.NewRequest(http.MethodGet, "http://localhost:8080/api/user/orders", nil)
