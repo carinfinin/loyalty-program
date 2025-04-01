@@ -41,8 +41,6 @@ func (s *Service) Register(ctx context.Context, user *models.User) (string, erro
 		return "", err
 	}
 
-	logger.Log.Info(nf, fmt.Sprintf(" id: %d", id))
-	logger.Log.Info(nf, fmt.Sprintf(" token: %v", token))
 	return token, nil
 }
 
