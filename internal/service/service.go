@@ -27,13 +27,15 @@ type ServiceInterface interface {
 }
 
 type Service struct {
-	store      store.Repository
-	Config     *config.Config
-	chJob      chan *models.Order
-	chResult   chan *models.Order
-	chBreak    chan struct{}
+	store    store.Repository
+	Config   *config.Config
+	chJob    chan *models.Order
+	chResult chan *models.Order
+	//chBreak    chan struct{}
 	retryAfter time.Duration
+	unTil      time.Time
 	shotDown   context.CancelFunc
+	mu         sync.Mutex
 }
 
 func New(cfg *config.Config, store store.Repository) *Service {
@@ -42,7 +44,8 @@ func New(cfg *config.Config, store store.Repository) *Service {
 		Config:   cfg,
 		chJob:    make(chan *models.Order, 100),
 		chResult: make(chan *models.Order, 100),
-		chBreak:  make(chan struct{}),
+		//chBreak:  make(chan struct{}),
+		mu: sync.Mutex{},
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -59,7 +62,7 @@ func (s *Service) Close() error {
 
 	s.shotDown()
 
-	close(s.chBreak)
+	//close(s.chBreak)
 	close(s.chJob)
 	close(s.chResult)
 
@@ -74,6 +77,13 @@ func (s *Service) Worker(ctx context.Context) {
 	for {
 		select {
 		case order := <-s.chJob:
+
+			s.mu.Lock()
+			if t := time.Until(s.unTil); t > 0 {
+				time.Sleep(t)
+			}
+			s.mu.Unlock()
+
 			semaphore <- struct{}{}
 			wg.Add(1)
 			go func(o *models.Order) {
@@ -83,9 +93,9 @@ func (s *Service) Worker(ctx context.Context) {
 				}()
 				s.job(o)
 			}(order)
-		case <-s.chBreak:
-			logger.Log.Debug("service Worker s.retryAfter: ", s.retryAfter)
-			time.Sleep(s.retryAfter)
+		//case <-s.chBreak:
+		//	logger.Log.Debug("service Worker s.retryAfter: ", s.retryAfter)
+		//	time.Sleep(s.retryAfter)
 		case <-ctx.Done():
 			wg.Wait()
 			return
@@ -124,7 +134,6 @@ func (s *Service) Inspector(ctx context.Context) {
 					logger.Log.Error("ctx cancel OrderBalanceUpdate error: ", err)
 				}
 			}
-
 			return
 		case <-ticker.C:
 			err := s.store.OrderBalanceUpdate(context.Background(), orders)
@@ -160,10 +169,12 @@ func (s *Service) job(order *models.Order) {
 			logger.Log.Debug(nf, fmt.Sprintf("error: %v", err))
 		}
 
-		s.retryAfter = time.Duration(ra)
-		s.chBreak <- struct{}{}
-
+		s.mu.Lock()
+		retAf := time.Duration(ra)
+		s.unTil = time.Now().Add(retAf)
 		s.chResult <- order
+		s.mu.Unlock()
+		//s.chBreak <- struct{}{}
 		return
 	}
 	if response.StatusCode == http.StatusNoContent {
@@ -199,9 +210,7 @@ func (s *Service) GetOrderForWorker(ctx context.Context) {
 		return
 	}
 
-	if len(orders) > 0 {
-		for _, order := range orders {
-			s.chJob <- order
-		}
+	for _, order := range orders {
+		s.chJob <- order
 	}
 }
