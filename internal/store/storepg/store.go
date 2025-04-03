@@ -15,7 +15,6 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"sync"
 )
 
 type UserStore struct {
@@ -219,8 +218,6 @@ func (s *UserStore) OrderBalanceUpdate(ctx context.Context, orders []*models.Ord
 
 func (s *UserStore) WithdrawalSave(ctx context.Context, wd *models.Withdrawal) error {
 
-	mu := sync.Mutex{}
-
 	const nf = "store withdrawal save "
 
 	userID := ctx.Value(router.UserID)
@@ -228,9 +225,6 @@ func (s *UserStore) WithdrawalSave(ctx context.Context, wd *models.Withdrawal) e
 	if userID == 0 {
 		return store.ErrUserNotFound
 	}
-
-	mu.Lock()
-	defer mu.Unlock()
 
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -241,7 +235,7 @@ func (s *UserStore) WithdrawalSave(ctx context.Context, wd *models.Withdrawal) e
 
 	//get
 	balance := models.Balance{}
-	row := tx.QueryRowContext(ctx, "SELECT id, current, withdrawn FROM balance WHERE user_id = $1", userID)
+	row := tx.QueryRowContext(ctx, "SELECT id, current, withdrawn FROM balance WHERE user_id = $1 FOR UPDATE", userID)
 	err = row.Scan(&balance.ID, &balance.Current, &balance.Withdrawn)
 	if err != nil {
 		logger.Log.Debug(nf, fmt.Sprintf("get balance error: %v", err))
@@ -256,7 +250,7 @@ func (s *UserStore) WithdrawalSave(ctx context.Context, wd *models.Withdrawal) e
 	balance.Withdrawn = balance.Withdrawn + wd.Sum
 
 	//update
-	_, err = tx.ExecContext(ctx, "UPDATE balance SET current = $1, withdrawn = $2 WHERE id = $3 AND user_id = $4", balance.Current, balance.Withdrawn, balance.ID, userID)
+	_, err = tx.ExecContext(ctx, "UPDATE balance SET current = $1, withdrawn = $2 WHERE id = $3", balance.Current, balance.Withdrawn, balance.ID)
 	if err != nil {
 		logger.Log.Debug(nf, fmt.Sprintf("update balance error: %v", err))
 		return err
