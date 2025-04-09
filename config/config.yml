@@ -1,0 +1,7 @@
+addr: "localhost:8080"
+timeout_read: "15s"
+timeout_write: "15s"
+db_path: "postgres://user:password@localhost:5432/loyalty?sslmode=disable"
+accrual_address: ""
+# secret поменяять для prod
+secret: "_alohomora_"

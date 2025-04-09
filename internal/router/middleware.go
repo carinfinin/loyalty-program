@@ -1,0 +1,35 @@
+package router
+
+import (
+	"context"
+	"github.com/carinfinin/loyalty-program/internal/jwtc"
+	"github.com/carinfinin/loyalty-program/internal/logger"
+	"net/http"
+)
+
+type keyUserID string
+
+const UserID keyUserID = "userID"
+
+func (r *Router) AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+
+		cookie, err := request.Cookie(jwtc.AuthCookie)
+		if err != nil {
+			http.Error(writer, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		id, err := jwtc.Decode(cookie.Value, r.Config)
+		if err != nil {
+			logger.Log.Error(err)
+			http.Error(writer, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		logger.Log.Debug("AuthMiddleware UserId: ", id)
+		ctx := context.WithValue(request.Context(), UserID, id)
+		newReq := request.WithContext(ctx)
+		next.ServeHTTP(writer, newReq)
+	})
+}
